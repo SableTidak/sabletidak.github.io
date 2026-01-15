@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sable 的生命进度</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2d3436;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .description {
+            color: #636e72;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .time-unit {
+            background: #74b9ff;
+            color: white;
+            padding: 30px 15px;
+            border-radius: 15px;
+            transition: transform 0.3s;
+        }
+        
+        .time-unit:hover {
+            transform: translateY(-5px);
+            background: #0984e3;
+        }
+        
+        .number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .label {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .target-info {
+            background: #dfe6e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 30px 0;
+            color: #2d3436;
+        }
+
+        /* 进度条区域 */
+        .progress-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .progress-title {
+            color: #2d3436;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .progress-bar-container {
+            background: #ecf0f1;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, #74b9ff, #00cec9);
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            margin-top: 10px;
+            color: #636e72;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .countdown {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 25px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .countdown {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⏳ Sable 目前的生命进度</h1>
+        <p class="description">距离生命终点还有：</p>
+        
+        <div class="countdown">
+            <div class="time-unit">
+                <div class="number" id="days">00</div>
+                <div class="label">天数</div>
+            </div>
+            <div class="time-unit">
+                <div class="number" id="hours">00</div>
+                <div class="label">小时</div>
+            </div>
+            <div class="time-unit">
+                <div class="number" id="minutes">00</div>
+                <div class="label">分钟</div>
+            </div>
+            <div class="time-unit">
+                <div class="number" id="seconds">00</div>
+                <div class="label">秒钟</div>
+            </div>
+        </div>
+        
+        <div class="target-info">
+            <p>生命终点：<span id="targetDate">2063年10月11日 00:00:00</span></p>
+            <p>当前时间：<span id="currentTime">--:--:--</span></p>
+        </div>
+
+        <!-- 生命进度条 -->
+        <div class="progress-section">
+            <div class="progress-title">📊 生命已完成</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const birthDate = new Date('2003-10-11T00:00:00');
+        const lifeExpectancyYears = 60;
+        const totalDays = Math.round(lifeExpectancyYears * 365.25); // 考虑闰年
+        const targetDate = new Date(birthDate);
+        targetDate.setFullYear(birthDate.getFullYear() + lifeExpectancyYears);
+
+        function padZero(num) {
+            return num < 10 ? '0' + num : num;
+        }
+
+        function getDaysBetween(date1, date2) {
+            const diffTime = Math.abs(date2 - date1);
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function updateDisplay() {
+            const now = new Date();
+            const timeLeft = targetDate - now;
+
+            // 更新倒计时
+            if (timeLeft > 0) {
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                document.getElementById('days').textContent = padZero(days);
+                document.getElementById('hours').textContent = padZero(hours);
+                document.getElementById('minutes').textContent = padZero(minutes);
+                document.getElementById('seconds').textContent = padZero(seconds);
+            } else {
+                document.querySelectorAll('.time-unit').forEach(unit => {
+                    unit.style.background = '#e17055';
+                });
+                ['days', 'hours', 'minutes', 'seconds'].forEach(id => {
+                    document.getElementById(id).textContent = "00";
+                });
+            }
+
+            // 更新日期显示
+            document.getElementById('targetDate').textContent = 
+                `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日 00:00:00`;
+
+            document.getElementById('currentTime').textContent = 
+                `${now.getFullYear()}-${padZero(now.getMonth()+1)}-${padZero(now.getDate())} ` +
+                `${padZero(now.getHours())}:${padZero(now.getMinutes())}:${padZero(now.getSeconds())}`;
+
+            // === 计算生命进度 ===
+            const livedDays = getDaysBetween(birthDate, now);
+            const progressPercent = Math.min(100, (livedDays / totalDays) * 100);
+            const formattedPercent = progressPercent.toFixed(2);
+
+            // 更新进度条
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+            document.getElementById('progressText').textContent = 
+                `已度过 ${livedDays} 天 / 总共 ${totalDays} 天（${formattedPercent}%）`;
+        }
+
+        // 初始化并每秒更新
+        updateDisplay();
+        setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>
